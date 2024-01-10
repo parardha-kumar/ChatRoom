@@ -6,11 +6,7 @@ class Room extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            messages: [
-                // Dummy data (Pull from DB)
-                { id: 1, text: "Hello, this is a test message!", upvotes: 0, downvotes: 0 },
-                { id: 2, text: "Another example message here.", upvotes: 0, downvotes: 0 }
-            ],
+            messages: [],
             currentMessage: '' // New state property for the current message
         };
     }
@@ -18,9 +14,11 @@ class Room extends Component {
     componentDidMount(){
         if (socket) {
             console.log("Socket defined")
-            socket.on("msg_recvd", (data) =>{
-                console.log("New Message Rcvd!" + data['msg'])
-                this.handleNewMessage(data['msg']);
+            socket.on("msg_recvd", (data) => {
+                this.setState({ messages: data.messages });
+            });
+            socket.on("update_message", (data) => {
+                this.setState({ messages: data.messages });
             });
         } else {
             console.error('Socket is not initialized');
@@ -29,17 +27,8 @@ class Room extends Component {
 
     componentWillUnmount(){
         socket.off("msg_recvd")
+        socket.off("update_message");
     }
-
-    // handleSendMessage = () => {
-    //     // Emit a socket event when the button is clicked
-    //     if (socket) {
-    //         socket.emit("message", {msg: "Hello, Server!" }, (response) => {
-    //         });
-    //     } else {
-    //         console.error('Socket is not initialized');
-    //     }
-    // };
 
     handleNewMessage = (msg) => {
         this.setState(prevState => ({
@@ -65,36 +54,28 @@ class Room extends Component {
 
 
     handleUpvote = (messageId) => {
-        this.setState(prevState => ({
-            messages: prevState.messages.map(message => 
-                message.id === messageId ? { ...message, upvotes: message.upvotes + 1 } : message
-            )
-        }));
+        socket.emit("upvote", { message_id: messageId });
     };
 
     handleDownvote = (messageId) => {
-        this.setState(prevState => ({
-            messages: prevState.messages.map(message => 
-                message.id === messageId ? { ...message, downvotes: message.downvotes + 1 } : message
-            )
-        }));
+        socket.emit("downvote", { message_id: messageId });
     };
 
     render() {
 
-        const { messages } = this.state;
+        const { messages, currentMessage } = this.state;
 
         
         return (
             <>
                 <div>
-                <input 
+                    <input 
                         type="text" 
-                        value={this.state.currentMessage} 
+                        value={currentMessage} 
                         onChange={this.handleInputChange} 
                         placeholder="Type your message here..."
                     />
-                    <button onClick={this.handleSendMessage}>Send Message </button>
+                    <button onClick={this.handleSendMessage}>Send Message</button>
                 </div>
 
                 <div className="chat-room">
