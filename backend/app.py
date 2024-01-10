@@ -1,10 +1,44 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room, leave_room, close_room, disconnect
 import json
 
 app = Flask(__name__)
+CORS(app)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Dummy user data - Replace with database in production
+users = {"user1": "pass123", "user2": "pass123", "user3": "pass123"}
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+
+    if username in users:
+        return jsonify({'error': 'Username already exists'}), 400
+
+    users[username] = password
+    return jsonify({'message': 'User created successfully'}), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+
+    if username not in users or users[username] != password:
+        return jsonify({'error': 'Invalid credentials'}), 401
+
+    return jsonify({'message': 'Logged in successfully'}), 200
 
 room_id = "chat-room"
 

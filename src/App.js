@@ -1,39 +1,25 @@
-import './App.css';
-
-import React, { Component } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-import { Global, socket, initiate_socket_connection } from './Global';
-
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './components/context/AuthContext'; // Adjust the import path as needed
+import ProtectedRoute from './ProtectedRoute'; // Adjust the import path as needed
 import Home from './components/Home/Home';
 import Room from './components/Room/Room';
+import Login from './components/Login/Login';
+import SignUp from './components/SignUp/SignUp';
 
-class App extends Component {
-  componentDidMount() {
-    initiate_socket_connection();
-  }
-
-  componentWillUnmount() {
-    if (socket) {
-      socket.off('connect');
-      socket.off('connect_error');
-    }
-  }
-  
-  render() {
+const App = () => {
     return (
-      //add your component to this by Route path = "/{component name}"
-      <BrowserRouter>
-        <div>
-          <Global />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/chat-room" element={<Room />} />
-          </Routes>
-        </div>
-      </BrowserRouter>
+        <AuthProvider>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/chat-room" element={ <Room /> } />
+                </Routes>
+            </Router>
+        </AuthProvider>
     );
-  }
-}
+};
 
 export default App;
