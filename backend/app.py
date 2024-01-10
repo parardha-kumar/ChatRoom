@@ -9,10 +9,9 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 room_id = "chat-room"
 
-messages = [
-    {"id": 1, "text": "Hello, this is a test server message!", "upvotes": 0, "downvotes": 0},
-    {"id": 2, "text": "Another example sercer message here.", "upvotes": 0, "downvotes": 0}
-]
+messages = []
+
+last_id = 123
 
 # MongoDB setup
 mongo_uri = "mongodb://localhost:27017/"  # Replace with your MongoDB URI
@@ -36,6 +35,7 @@ def handle_connect():
 def handle_create_room(request=None):
     print("Creating New Room")
     join_room(room_id)
+    messages = fetch_messages()
     socketio.emit('msg_recvd', {'messages': messages},include_self=True)
     return {'code': json.dumps(0),
             'message': "Socket Connection Successful"}
@@ -44,26 +44,28 @@ def handle_create_room(request=None):
 def handle_message(data):
     print("New Message")
     print(data)
-    new_message = {"text": data['msg'], "upvotes": 0, "downvotes": 0, "voted": []}
+    global last_id
+    new_message = {"id": last_id + 1, "text": data['msg'], "upvotes": 0, "downvotes": 0, "voted": []}
+    last_id += 1
     save_message(new_message)
     updated_messages = fetch_messages()
-    socketio.emit('msg_recvd', {'messages': updated_messages}, broadcast=True)
+    socketio.emit('msg_recvd', {'messages': updated_messages})
 
 @socketio.on('upvote')
 def handle_upvote(data):
+    print("Upvote data received:", data)
     message_id = data['message_id']
     user_id = request.sid  # Using the socket ID as a unique identifier for the user
 
     # Update the message in the database
-    result = messages_collection.find_one_and_update(
+    _ = messages_collection.find_one_and_update(
         {"id": message_id, "voted": {"$ne": user_id}},
         {"$inc": {"upvotes": 1}, "$push": {"voted": user_id}},
         return_document=True
     )
 
-    if result:
-        updated_messages = fetch_messages()
-        socketio.emit('update_message', {'message': updated_messages}, broadcast=True)
+    updated_messages = fetch_messages()
+    socketio.emit('update_message', {'message': updated_messages}, include_self=True)
 
     # message = next((m for m in messages if m['id'] == data['message_id']), None)
     # if message:
@@ -76,15 +78,14 @@ def handle_downvote(data):
     user_id = request.sid
 
     # Update the message in the database
-    result = messages_collection.find_one_and_update(
+    _ = messages_collection.find_one_and_update(
         {"id": message_id, "voted": {"$ne": user_id}},
         {"$inc": {"downvotes": 1}, "$push": {"voted": user_id}},
         return_document=True
     )
 
-    if result:
-        updated_messages = fetch_messages()
-        socketio.emit('update_message', {'message': updated_messages}, broadcast=True)
+    updated_messages = fetch_messages()
+    socketio.emit('update_message', {'message': updated_messages}, include_self=True)
 
 
 if __name__ == '__main__':

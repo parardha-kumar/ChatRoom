@@ -10,22 +10,26 @@ class Room extends Component {
             currentMessage: '' // New state property for the current message
         };
     }
-    
-    componentDidMount(){
+
+    componentDidMount() {
         if (socket) {
             console.log("Socket defined")
             socket.on("msg_recvd", (data) => {
-                this.setState({ messages: data.messages });
+                if (data && data.messages) {
+                    this.setState({ messages: data.messages });
+                }
             });
             socket.on("update_message", (data) => {
-                this.setState({ messages: data.messages });
+                if (data && data.messages) {
+                    this.setState({ messages: data.messages });
+                }
             });
         } else {
             console.error('Socket is not initialized');
         }
     }
 
-    componentWillUnmount(){
+    componentWillUnmount() {
         socket.off("msg_recvd")
         socket.off("update_message");
     }
@@ -54,7 +58,9 @@ class Room extends Component {
 
 
     handleUpvote = (messageId) => {
-        socket.emit("upvote", { message_id: messageId });
+        var request = { 'message_id': messageId };
+        console.log("Emitting upvote for message ID:", messageId);
+        socket.emit("upvote", request);
     };
 
     handleDownvote = (messageId) => {
@@ -65,14 +71,14 @@ class Room extends Component {
 
         const { messages, currentMessage } = this.state;
 
-        
+
         return (
             <>
                 <div>
-                    <input 
-                        type="text" 
-                        value={currentMessage} 
-                        onChange={this.handleInputChange} 
+                    <input
+                        type="text"
+                        value={currentMessage}
+                        onChange={this.handleInputChange}
                         placeholder="Type your message here..."
                     />
                     <button onClick={this.handleSendMessage}>Send Message</button>
