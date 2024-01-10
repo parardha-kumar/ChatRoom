@@ -1,25 +1,39 @@
-import logo from './logo.svg';
 import './App.css';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import React, { Component } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+import { Global, socket, initiate_socket_connection } from './Global';
+
+import Home from './components/Home/Home';
+import Room from './components/Room/Room';
+
+class App extends Component {
+  componentDidMount() {
+    initiate_socket_connection();
+  }
+
+  componentWillUnmount() {
+    if (socket) {
+      socket.off('connect');
+      socket.off('connect_error');
+    }
+  }
+  
+  render() {
+    return (
+      //add your component to this by Route path = "/{component name}"
+      <BrowserRouter>
+        <div>
+          <Global />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/chat-room" element={<Room />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    );
+  }
 }
 
 export default App;
