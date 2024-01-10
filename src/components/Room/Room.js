@@ -4,19 +4,23 @@ import { socket } from '../../Global';
 class Room extends Component {
     componentDidMount(){
         if (socket) {
+            console.log("Socket degfined")
             socket.on("msg_recvd", (data) =>{
-                console.log("New Message Rcvd!" + data.msg)
+                console.log("New Message Rcvd!" + data['msg'])
             });
         } else {
             console.error('Socket is not initialized');
         }
     }
 
+    componentWillUnmount(){
+        socket.off("msg_recvd")
+    }
+
     handleSendMessage = () => {
         // Emit a socket event when the button is clicked
         if (socket) {
             socket.emit("message", {msg: "Hello, Server!" }, (response) => {
-                console.log('Server Response:', response);
             });
         } else {
             console.error('Socket is not initialized');
