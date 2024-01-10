@@ -4,7 +4,7 @@ import { socket } from '../../Global';
 class Room extends Component {
     componentDidMount(){
         if (socket) {
-            console.log("Socket degfined")
+            console.log("Socket defined")
             socket.on("msg_recvd", (data) =>{
                 console.log("New Message Rcvd!" + data['msg'])
             });

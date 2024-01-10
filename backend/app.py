@@ -12,7 +12,7 @@ room_id = "chat-room"
 def handle_create_room(request=None):
     print("Creating New Room")
     join_room(room_id)
-    socketio.emit('msg_recvd', {'msg': "New Player Joined"}, room = room_id, include_self=True)
+    socketio.emit('msg_recvd', {'msg': "New Player Joined"},include_self=True)
     return {'code': json.dumps(0),
             'message': "Socket Connection Successful"}
 
@@ -21,7 +21,7 @@ def handle_message(request):
     print("New Message")
     print(request)
     message = request['msg']
-    socketio.emit('msg_recvd', {'msg': message}, room = room_id, include_self=True)
+    socketio.emit('msg_recvd', {'msg': message}, include_self=True)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0')
